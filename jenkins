@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    tools{
+        maven 'jenkins-maven'
+    }
+    stages{
+        stage('Build Maven'){
+            steps{
+               checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/vignandigoju/jenkin-practice']])
+                bat 'mvn clean install'
+            }
+        }
+        stage('Build and Push Docker Image'){
+            steps{
+                script{
+
+                    bat 'docker build -t vignandigoju/devops-integration .'
+                    bat 'docker push vignandigoju/devops-integration'
+                }
+            }
+        }
+         stage('Deploy to k8s'){
+            steps{
+                script{
+                    kubernetesDeploy (configs: 'deploymentservice.yml',kubeconfigId: 'k8sconfigpwd')
+                }
+            }
+        }
+
+    }
+}
